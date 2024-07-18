@@ -11,14 +11,13 @@ ngrokのアカウントを作成してください。
 
 https://dashboard.ngrok.com/signup
 
-## ngrokをインストールする
+## ngrokにログインする
 
-予めngrokをインストールします。
-
-インストール後、ngrokのログイン後の画面に表示されている、下記のコマンドを実行して認証します。
+[Authtokenの取得画面](https://dashboard.ngrok.com/get-started/your-authtoken)より、Authtokenをコピーして下記のコマンドを実行する。
+これにより、コマンドライン上でもngrokにログインできます。
 
 ```
-ngrok config add-authtoken ...
+ngrok config add-authtoken コピーしたAuthtoken
 ```
 
 # 実行する
