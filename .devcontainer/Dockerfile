@@ -49,6 +49,8 @@ RUN apt-get update \
         curl \
         gettext \
         inotify-tools \
+        git \
+        sudo \
     && rm -rf /var/lib/apt/lists/* \
     # This is the folder containing 'links' to benv and build script generator
     && apt-get update \
@@ -57,16 +59,12 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 
-RUN apt-get update && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends curl git sudo && \
-    curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && \
+RUN curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null && \
     echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | tee /etc/apt/sources.list.d/ngrok.list && \
     apt-get update && \
     apt-get install -y ngrok nodejs npm && \
     npm install n -g && \
-    n stable && \
-    apt-get purge -y nodejs npm && \
-    apt-get autoremove -y
+    n stable
 
 # Verify expected build and debug tools are present
 RUN apt-get update \
