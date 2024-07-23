@@ -107,4 +107,3 @@ RUN if [ -z $DeveloperBuild ]; then \
         curl -sSL https://aka.ms/getvsdbgsh | bash /dev/stdin -v latest -l /vsdbg ; \
     fi
 
-RUN npm install
