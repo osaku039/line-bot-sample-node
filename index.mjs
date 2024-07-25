@@ -7,7 +7,9 @@ import dotenv from 'dotenv';
 
 import { LineApi } from './line-api.mjs';
 import { DataStore } from './data-store.mjs';
-import { stat } from 'fs';
+import { fileURLToPath } from 'url';
+import * as path from 'path';
+import { readFileSync } from 'fs';
 
 // .envファイル空環境変数を読み込み
 dotenv.config();
@@ -25,7 +27,6 @@ app.use(express.json({
 // TCP/8080ポートでサーバを起動
 app.listen(8080);
 
-
 const lineApi = new LineApi(CHANNEL_ACCESS_TOKEN);
 const datastore = new DataStore();
 
@@ -33,6 +34,14 @@ const datastore = new DataStore();
 // レスポンスがきちんと返せているかの確認用
 app.get('/', (request, response) => {
   response.status(200).send('Hello');
+});
+
+app.get('/numbers', async (request, response, buf) => {
+  const template = readFileSync('numbers.html').toString();
+  const saved_numbers = (await datastore.load_global())['saved_numbers'];
+  const html = template.replace("$NUMBERS", saved_numbers && `[${saved_numbers?.join(",")}]`);
+  console.log(html);
+  response.status(200).send(html);
 });
 
 // webhookを受け取るエンドポイントを定義
@@ -55,10 +64,6 @@ app.post('/webhook', (request, response, buf) => {
   body.events.forEach(async (event) => {
     switch (event.type) {
       case 'message':　// event.typeがmessageのとき応答
-        // 頭に　返信: をつけて、そのまま元のメッセージを返す実装
-        // await lineApi.replyMessage(event.replyToken, `返信: ${event.message.text}`);
-        // break;
-
         // 状態を持つ実装
         if (event.source.type == "user") {
           const state = await datastore.load(event.source.userId);
@@ -70,6 +75,15 @@ app.post('/webhook', (request, response, buf) => {
           if (match) {
             const delta = parseInt(match[1], 10);
             current_number += delta;
+          }
+          
+          // 形式が`保存`の場合は、現在の数字を保存する
+          if (event.message.text.match(/^保存$/)) {
+            const current = await datastore.load_global();
+            current['saved_numbers'] ??= [];
+            console.log(current);
+            current['saved_numbers'].push((await datastore.load(event.source.userId)).current_number ?? 0);
+            await datastore.save_global(current);
           }
 
           // 状態を保存
