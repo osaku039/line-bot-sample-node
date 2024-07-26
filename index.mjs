@@ -30,17 +30,43 @@ app.listen(8080);
 const lineApi = new LineApi(CHANNEL_ACCESS_TOKEN);
 const datastore = new DataStore();
 
-// ルートのエンドポイント定義
-// レスポンスがきちんと返せているかの確認用
-app.get('/', (request, response) => {
-  response.status(200).send('Hello');
-});
+app.get('/', async (request, response, buf) => {
+  const template = readFileSync('results.html').toString();
+  //const saved_numbers = (await datastore.load_global())['saved_numbers'];
+  //const html = template.replace("$NUMBERS", saved_numbers && `[${saved_numbers?.join(",")}]`);
 
-app.get('/numbers', async (request, response, buf) => {
-  const template = readFileSync('numbers.html').toString();
-  const saved_numbers = (await datastore.load_global())['saved_numbers'];
-  const html = template.replace("$NUMBERS", saved_numbers && `[${saved_numbers?.join(",")}]`);
-  console.log(html);
+  const authHeader = request.headers.authorization;
+  let html = template.replaceAll("$LIFF_ID", `'${process.env.LIFF_ID}'`);
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const idToken = authHeader.substring(7);
+    const verifyResponse = await lineApi.verify(idToken, process.env.CHANNEL_ID);
+
+    if (verifyResponse.status === 200) {
+      const userProfile = verifyResponse.data;
+      console.log('User Profile:', userProfile);
+      
+      // HTMLテンプレートにユーザー情報を挿入
+      html = html.replaceAll('$USER_NAME', userProfile.name);
+
+      console.log(userProfile.sub);
+      const state = await datastore.load(userProfile.sub);
+      console.log(state);
+      const results = state['results'];
+      console.log(results);
+
+      if (results != null) {
+        html = html.replace(
+          '$RESULTS',
+          results.map((result => {
+            console.log(result.result);
+            return `<div>${result.result}</div>`;
+          })).join('\n')
+        );
+      }
+    }
+  }
+
   response.status(200).send(html);
 });
 
@@ -76,6 +102,7 @@ app.post('/webhook', (request, response, buf) => {
 
           // 戦績を保存
           const state = await datastore.load(userId);
+          console.log(userId);
           await datastore.save(userId, {
             results: [
               {
@@ -112,9 +139,9 @@ function createReplyText(result, botHand) {
 
   switch (result) {
     case "勝ち":
-      return baseMessage + "あなたの勝ちです！🎉 さすがですね！";
-    case "負け":
       return baseMessage + "BOTの勝ちです！😆 次は勝てるかな？";
+    case "負け":
+      return baseMessage + "あなたの勝ちです！🎉 さすがですね！";
     case "引き分け":
       return baseMessage + "引き分けです！😮 もう一回勝負しましょう！";
     default:

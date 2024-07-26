@@ -1,5 +1,6 @@
 // HTTP APIを実行しやすくするためのライブラリ: Axios
 import axios from 'axios';
+import * as querystring from 'querystring';
 
 // LINE APIのラッパー
 class LineApi {
@@ -18,6 +19,14 @@ class LineApi {
         Authorization: `Bearer ${channelSecret}`,
       },
     });
+
+    this.oauthApi = new axios.create({
+      baseURL: 'https://api.line.me/oauth2',
+      headers: {
+        Authorization: `Bearer ${channelSecret}`,
+        'Content-Type': 'application/json',
+      },
+    });
   }
 
   // 応答メッセージAPI
@@ -33,6 +42,21 @@ class LineApi {
     };
 
     return await this.api.post('/bot/message/reply', body);
+  }
+  
+  async verify(idToken, clientId) {
+    var params = new URLSearchParams();
+    params.append('id_token', idToken);
+    params.append('client_id', clientId);
+
+    return await this.oauthApi.post('/v2.1/verify', 
+      params,
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      }
+    );
   }
 
   // リッチメニュー作成API

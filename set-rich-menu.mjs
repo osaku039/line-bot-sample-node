@@ -13,7 +13,7 @@ const lineApi = new LineApi(CHANNEL_ACCESS_TOKEN);
 const richMenuId = (await lineApi.createRichMenu(
   {
     width: 2500,
-    height: 850,
+    height: 1000,
   },
   true,
   "リッチメニューです",
@@ -23,8 +23,21 @@ const richMenuId = (await lineApi.createRichMenu(
       bounds: {
         x: 0,
         y: 0,
+        width: 2500,
+        height: 250,
+      },
+      action: {
+        type: "uri",
+        label: "戦績を見る",
+        uri: `https://liff.line.me/${process.env.LIFF_ID}`,
+      }
+    },
+    {
+      bounds: {
+        x: 0,
+        y: 250,
         width: 828,
-        height: 843,
+        height: 742,
       },
       action: {
         type: "message",
@@ -35,9 +48,9 @@ const richMenuId = (await lineApi.createRichMenu(
     {
       bounds: {
         x: 836,
-        y: 0,
+        y: 250,
         width: 828,
-        height: 843,
+        height: 742,
       },
       action: {
         type: "message",
@@ -48,9 +61,9 @@ const richMenuId = (await lineApi.createRichMenu(
     {
       bounds: {
         x: 1672,
-        y: 0,
+        y: 250,
         width: 828,
-        height: 843,
+        height: 742,
       },
       action: {
         type: "message",

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>$USER_NAMEさんの戦績</title>
+  <script charset='utf-8' src='https://static.line-scdn.net/liff/edge/2/sdk.js'></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", async function () {
+      await liff.init({ liffId: $LIFF_ID });
+      console.log("Success! you can do something with LIFF API here.");
+
+      const idToken = await liff.getIDToken();
+      console.log(idToken);
+      document.getElementById('test').innerHTML = idToken;
+      document.getElementById('test2').innerHTML = 'ok';
+
+      const response = await fetch('/', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      } 
+
+      document.querySelector('html').innerHTML = await response.text();
+    });
+  </script>
+</head>
+
+<body>
+  <div id="test"></div>
+  <div id="test2"></div>
+  <h1>$USER_NAMEさんの戦績</h1>
+  $RESULTS
+</body>
+
+</html>
