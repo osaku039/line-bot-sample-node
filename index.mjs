@@ -31,14 +31,13 @@ const lineApi = new LineApi(CHANNEL_ACCESS_TOKEN);
 const datastore = new DataStore();
 
 app.get('/', async (request, response, buf) => {
-  const template = readFileSync('results.html').toString();
-  //const saved_numbers = (await datastore.load_global())['saved_numbers'];
-  //const html = template.replace("$NUMBERS", saved_numbers && `[${saved_numbers?.join(",")}]`);
-
+ 
   const authHeader = request.headers.authorization;
-  let html = template.replaceAll("$LIFF_ID", `'${process.env.LIFF_ID}'`);
 
   if (authHeader && authHeader.startsWith('Bearer ')) {
+    const template = readFileSync('results.html').toString();
+    let html = template.replaceAll("$LIFF_ID", `'${process.env.LIFF_ID}'`);
+
     const idToken = authHeader.substring(7);
     const verifyResponse = await lineApi.verify(idToken, process.env.CHANNEL_ID);
     if (verifyResponse.status === 200) {
@@ -60,6 +59,8 @@ app.get('/', async (request, response, buf) => {
       html = html.replace('$TOTAL_GAMES', totalGames);
       html = html.replace('$WINS', wins);
       html = html.replace('$LOSSES', losses);
+
+      console.log(totalGames);
     
       if (results.length > 0) {
         html = html.replace(
@@ -78,10 +79,15 @@ app.get('/', async (request, response, buf) => {
       } else {
         html = html.replace('$RESULTS', '<p class="text-gray-500">まだ対戦履歴がありません。</p>');
       }
-    }
-  }
 
-  response.status(200).send(html);
+      response.status(200).send(html);
+    }
+  } else {
+    const template = readFileSync('loading.html').toString();
+    let html = template.replaceAll("$LIFF_ID", `'${process.env.LIFF_ID}'`);
+
+    response.status(200).send(html);
+  }
 });
 
 // webhookを受け取るエンドポイントを定義

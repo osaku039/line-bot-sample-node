@@ -1,44 +1,4 @@
-<!DOCTYPE html>
-<html lang="ja">
-
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>$USER_NAMEさんの戦績</title>
-  <script charset='utf-8' src='https://static.line-scdn.net/liff/edge/2/sdk.js'></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
-    body {
-      font-family: 'Noto Sans JP', sans-serif;
-    }
-  </style>
-  <script>
-    document.addEventListener("DOMContentLoaded", async function () {
-      await liff.init({ liffId: $LIFF_ID });
-      console.log("LIFF initialized successfully");
-
-      const idToken = await liff.getIDToken();
-      console.log("ID Token obtained");
-
-      const response = await fetch('/', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      } 
-
-      document.querySelector('html').innerHTML = await response.text();
-    });
-  </script>
-</head>
-
-<body class="bg-gray-100 min-h-screen">
+<div id="content">
   <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold text-center mb-8 text-indigo-600">$USER_NAMEさんの戦績</h1>
     <div class="bg-white shadow-md rounded-lg p-6">
@@ -62,6 +22,4 @@
       </div>
     </div>
   </div>
-</body>
-
-</html>
+</div>
