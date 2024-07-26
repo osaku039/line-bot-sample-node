@@ -64,37 +64,34 @@ app.post('/webhook', (request, response, buf) => {
   body.events.forEach(async (event) => {
     switch (event.type) {
       case 'message':　// event.typeがmessageのとき応答
-        // 状態を持つ実装
         if (event.source.type == "user") {
-          const state = await datastore.load(event.source.userId);
-          const last_message = state?.last_message || '';
-          let current_number = state?.current_number || 0;
+          const userId = event.source.userId;
 
-          // 形式が`{数字}を追加`に一致する場合は、数字を変更する
-          const match = event.message.text.match(/^(-?\d+)を追加$/);
-          if (match) {
-            const delta = parseInt(match[1], 10);
-            current_number += delta;
-          }
-          
-          // 形式が`保存`の場合は、現在の数字を保存する
-          if (event.message.text.match(/^保存$/)) {
-            const current = await datastore.load_global();
-            current['saved_numbers'] ??= [];
-            console.log(current);
-            current['saved_numbers'].push((await datastore.load(event.source.userId)).current_number ?? 0);
-            await datastore.save_global(current);
-          }
+          // BOTの手を選ぶ
+          const botHand = ["グー", "チョキ", "パー"][Math.floor(Math.random() * 3)];
+          const userHand = event.message.text;
 
-          // 状態を保存
-          await datastore.save(event.source.userId, {
-            last_message: event.message.text,
-            current_number,
+          // 勝ち負け判定
+          const result = judge(botHand, userHand)
+
+          // 戦績を保存
+          const state = await datastore.load(userId);
+          await datastore.save(userId, {
+            results: [
+              {
+                result,
+                botHand,
+                userHand,
+                creaedAt: formatDate(Date.now()),
+              },
+              ...(state['results'] ?? []),
+            ],
           });
-
+          
+          // 返信
           await lineApi.replyMessage(
             event.replyToken,
-            `現在の数字: ${current_number}\n1つ前のメッセージ: ${last_message}`
+            createReplyText(result, botHand),
           );
         }
         break;
@@ -103,6 +100,56 @@ app.post('/webhook', (request, response, buf) => {
 
   response.status(200).send({});
 });
+
+function createReplyText(result, botHand) {
+  const handEmoji = {
+    'グー': '✊',
+    'チョキ': '✌️',
+    'パー': '🖐️'
+  };
+
+  const baseMessage = `BOTの手は${handEmoji[botHand]}${botHand}でした！\n`;
+
+  switch (result) {
+    case "勝ち":
+      return baseMessage + "あなたの勝ちです！🎉 さすがですね！";
+    case "負け":
+      return baseMessage + "BOTの勝ちです！😆 次は勝てるかな？";
+    case "引き分け":
+      return baseMessage + "引き分けです！😮 もう一回勝負しましょう！";
+    default:
+      return "手は「グー」「チョキ」「パー」の中から選んでね！";
+  }
+}
+
+function judge(myHand, otherHand) {
+  const validHands = ['グー', 'チョキ', 'パー'];
+  const winCombos = {
+    'グー': 'チョキ',
+    'チョキ': 'パー',
+    'パー': 'グー'
+  };
+
+  // 有効な手かどうかをチェック
+  if (!validHands.includes(myHand) || !validHands.includes(otherHand)) {
+    return null;
+  }
+
+  if (myHand === otherHand) return "引き分け";
+  return winCombos[myHand] === otherHand ? "勝ち" : "負け";
+}
+
+function formatDate(timestamp) {
+  const date = new Date(timestamp);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+
+  return `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`;
+}
 
 // webhookの署名検証
 // https://developers.line.biz/ja/reference/messaging-api/#signature-validation

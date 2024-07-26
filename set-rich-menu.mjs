@@ -19,7 +19,7 @@ const richMenuId = (await lineApi.createRichMenu(
   "リッチメニューです",
   "開いてね",
   [
-    { // 10を追加する
+    {
       bounds: {
         x: 0,
         y: 0,
@@ -28,11 +28,11 @@ const richMenuId = (await lineApi.createRichMenu(
       },
       action: {
         type: "message",
-        label: "10を追加する",
-        text: "10を追加",
+        label: "グー",
+        text: "グー",
       }
     },
-    { // 保存
+    {
       bounds: {
         x: 836,
         y: 0,
@@ -41,11 +41,11 @@ const richMenuId = (await lineApi.createRichMenu(
       },
       action: {
         type: "message",
-        label: "保存する",
-        text: "保存",
+        label: "チョキ",
+        text: "チョキ",
       }
     },
-    { // 保存された数字を見る
+    {
       bounds: {
         x: 1672,
         y: 0,
@@ -53,9 +53,9 @@ const richMenuId = (await lineApi.createRichMenu(
         height: 843,
       },
       action: {
-        type: "uri",
-        label: "保存された数字を見る",
-        uri: "https://3e45-4-194-75-19.ngrok-free.app/numbers",
+        type: "message",
+        label: "パー",
+        text: "パー",
       }
     }
   ]
