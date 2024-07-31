@@ -6,8 +6,6 @@ import crypto from 'crypto';
 import dotenv from 'dotenv';
 
 import { LineApi } from './line-api.mjs';
-import { DataStore } from './data-store.mjs';
-import { stat } from 'fs';
 
 // .envファイル空環境変数を読み込み
 dotenv.config();
@@ -27,7 +25,6 @@ app.listen(8080);
 
 
 const lineApi = new LineApi(CHANNEL_ACCESS_TOKEN);
-const datastore = new DataStore();
 
 // ルートのエンドポイント定義
 // レスポンスがきちんと返せているかの確認用
@@ -56,33 +53,7 @@ app.post('/webhook', (request, response, buf) => {
     switch (event.type) {
       case 'message':　// event.typeがmessageのとき応答
         // 頭に　返信: をつけて、そのまま元のメッセージを返す実装
-        // await lineApi.replyMessage(event.replyToken, `返信: ${event.message.text}`);
-        // break;
-
-        // 状態を持つ実装
-        if (event.source.type == "user") {
-          const state = await datastore.load(event.source.userId);
-          const last_message = state?.last_message || '';
-          let current_number = state?.current_number || 0;
-
-          // 形式が`{数字}を追加`に一致する場合は、数字を変更する
-          const match = event.message.text.match(/^(-?\d+)を追加$/);
-          if (match) {
-            const delta = parseInt(match[1], 10);
-            current_number += delta;
-          }
-
-          // 状態を保存
-          await datastore.save(event.source.userId, {
-            last_message: event.message.text,
-            current_number,
-          });
-
-          await lineApi.replyMessage(
-            event.replyToken,
-            `現在の数字: ${current_number}\n1つ前のメッセージ: ${last_message}`
-          );
-        }
+        await lineApi.replyMessage(event.replyToken, `返信: ${event.message.text}`);
         break;
     }
   });
