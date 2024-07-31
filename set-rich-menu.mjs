@@ -16,8 +16,8 @@ const richMenuId = (await lineApi.createRichMenu(
     height: 1000,
   },
   true,
-  "リッチメニューです",
-  "開いてね",
+  "リッチメニュー",
+  "リッチメニューを開く",
   [
     {
       bounds: {
