@@ -30,66 +30,6 @@ app.listen(8080);
 const lineApi = new LineApi(CHANNEL_ACCESS_TOKEN);
 const datastore = new DataStore();
 
-app.get('/', async (request, response, buf) => {
- 
-  const authHeader = request.headers.authorization;
-
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const template = readFileSync('results.html').toString();
-    let html = template.replaceAll("$LIFF_ID", `'${process.env.LIFF_ID}'`);
-
-    const idToken = authHeader.substring(7);
-    const verifyResponse = await lineApi.verify(idToken, process.env.CHANNEL_ID);
-    if (verifyResponse.status === 200) {
-      const userProfile = verifyResponse.data;
-      console.log('User Profile:', userProfile);
-      
-      html = html.replaceAll('$USER_NAME', userProfile.name);
-    
-      console.log(userProfile.sub);
-      const state = await datastore.load(userProfile.sub);
-      console.log(state);
-      const results = state['results'] || [];
-      console.log(results);
-    
-      const totalGames = results.length;
-      const wins = results.filter(r => r.result === "負け").length;  // ユーザーの勝利はBOTの負け
-      const losses = results.filter(r => r.result === "勝ち").length;  // ユーザーの敗北はBOTの勝ち
-    
-      html = html.replace('$TOTAL_GAMES', totalGames);
-      html = html.replace('$WINS', wins);
-      html = html.replace('$LOSSES', losses);
-
-      console.log(totalGames);
-    
-      if (results.length > 0) {
-        html = html.replace(
-          '$RESULTS',
-          results.map((result => {
-            const resultClass = result.result === "負け" ? "text-green-600" : (result.result === "勝ち" ? "text-red-600" : "text-yellow-600");
-            return `
-              <div class="bg-gray-50 p-4 rounded-lg">
-                <p class="font-semibold ${resultClass}">${result.result === "負け" ? "勝利" : (result.result === "勝ち" ? "敗北" : "引き分け")}</p>
-                <p>あなたの手: ${result.userHand} / BOTの手: ${result.botHand}</p>
-                <p class="text-sm text-gray-500">${result.creaedAt}</p>
-              </div>
-            `;
-          })).join('\n')
-        );
-      } else {
-        html = html.replace('$RESULTS', '<p class="text-gray-500">まだ対戦履歴がありません。</p>');
-      }
-
-      response.status(200).send(html);
-    }
-  } else {
-    const template = readFileSync('loading.html').toString();
-    let html = template.replaceAll("$LIFF_ID", `'${process.env.LIFF_ID}'`);
-
-    response.status(200).send(html);
-  }
-});
-
 // webhookを受け取るエンドポイントを定義
 // POST /webhook
 app.post('/webhook', (request, response, buf) => {
@@ -129,16 +69,17 @@ app.post('/webhook', (request, response, buf) => {
                 result,
                 botHand,
                 userHand,
-                creaedAt: formatDate(Date.now()),
+                createdAt: formatDate(Date.now()),
               },
               ...(state['results'] ?? []),
             ],
           });
-          
+
+          console.log(state['results']);
           // 返信
           await lineApi.replyMessage(
             event.replyToken,
-            createReplyText(result, botHand),
+            createReplyText(state['results']?.[0], result, botHand),
           );
         }
         break;
@@ -148,25 +89,35 @@ app.post('/webhook', (request, response, buf) => {
   response.status(200).send({});
 });
 
-function createReplyText(result, botHand) {
+function createReplyText(lastResult, result, botHand) {
   const handEmoji = {
     'グー': '✊',
     'チョキ': '✌️',
     'パー': '🖐️'
   };
 
-  const baseMessage = `BOTの手は${handEmoji[botHand]}${botHand}でした！\n`;
+  const baseMessage = `今回のBOTの手は${handEmoji[botHand]}${botHand}でした！\n`;
 
   switch (result) {
     case "勝ち":
-      return baseMessage + "BOTの勝ちです！😆 次は勝てるかな？";
+      return lastResultMessage(lastResult) + baseMessage + "BOTの勝ちです！😆 次は勝てるかな？";
     case "負け":
-      return baseMessage + "あなたの勝ちです！🎉 さすがですね！";
+      return lastResultMessage(lastResult) + baseMessage + "あなたの勝ちです！🎉 さすがですね！";
     case "引き分け":
-      return baseMessage + "引き分けです！😮 もう一回勝負しましょう！";
+      return lastResultMessage(lastResult) + baseMessage + "引き分けです！😮 もう一回勝負しましょう！";
     default:
       return "手は「グー」「チョキ」「パー」の中から選んでね！";
   }
+}
+
+function lastResultMessage(lastResult) {
+  const messages = {
+    '勝ち': '前回はBOTの勝ちでした\n',
+    '負け': '前回はあなたの勝ちでした\n',
+    '引き分け': '前回は引き分けでした\n'
+  };
+
+  return messages[lastResult?.['result']] ?? '';
 }
 
 function judge(myHand, otherHand) {
