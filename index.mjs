@@ -7,9 +7,6 @@ import dotenv from 'dotenv';
 
 import { LineApi } from './line-api.mjs';
 import { DataStore } from './data-store.mjs';
-import { fileURLToPath } from 'url';
-import * as path from 'path';
-import { readFileSync } from 'fs';
 
 // .envファイル空環境変数を読み込み
 dotenv.config();
