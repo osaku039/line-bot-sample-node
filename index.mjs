@@ -31,7 +31,7 @@ const lineApi = new LineApi(CHANNEL_ACCESS_TOKEN);
 const datastore = new DataStore();
 
 app.get('/', async (request, response, buf) => {
- 
+
   const authHeader = request.headers.authorization;
 
   if (authHeader && authHeader.startsWith('Bearer ')) {
@@ -43,25 +43,25 @@ app.get('/', async (request, response, buf) => {
     if (verifyResponse.status === 200) {
       const userProfile = verifyResponse.data;
       console.log('User Profile:', userProfile);
-      
+
       html = html.replaceAll('$USER_NAME', userProfile.name);
-    
+
       console.log(userProfile.sub);
       const state = await datastore.load(userProfile.sub);
       console.log(state);
       const results = state['results'] || [];
       console.log(results);
-    
+
       const totalGames = results.length;
       const wins = results.filter(r => r.result === "負け").length;  // ユーザーの勝利はBOTの負け
       const losses = results.filter(r => r.result === "勝ち").length;  // ユーザーの敗北はBOTの勝ち
-    
+
       html = html.replace('$TOTAL_GAMES', totalGames);
       html = html.replace('$WINS', wins);
       html = html.replace('$LOSSES', losses);
 
       console.log(totalGames);
-    
+
       if (results.length > 0) {
         html = html.replace(
           '$RESULTS',
@@ -71,7 +71,7 @@ app.get('/', async (request, response, buf) => {
               <div class="bg-gray-50 p-4 rounded-lg">
                 <p class="font-semibold ${resultClass}">${result.result === "負け" ? "勝利" : (result.result === "勝ち" ? "敗北" : "引き分け")}</p>
                 <p>あなたの手: ${result.userHand} / BOTの手: ${result.botHand}</p>
-                <p class="text-sm text-gray-500">${result.creaedAt}</p>
+                <p class="text-sm text-gray-500">${result.createdAt}</p>
               </div>
             `;
           })).join('\n')
@@ -129,12 +129,12 @@ app.post('/webhook', (request, response, buf) => {
                 result,
                 botHand,
                 userHand,
-                creaedAt: formatDate(Date.now()),
+                createdAt: formatDate(Date.now()),
               },
               ...(state['results'] ?? []),
             ],
           });
-          
+
           // 返信
           await lineApi.replyMessage(
             event.replyToken,
