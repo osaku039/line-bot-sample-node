@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>じゃんけんの戦績</title>
+  <script charset='utf-8' src='https://static.line-scdn.net/liff/edge/2/sdk.js'></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap');
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+  </style>
+  <script>
+    document.addEventListener("DOMContentLoaded", async function () {
+      await liff.init({ liffId: $LIFF_ID });
+      console.log("LIFF initialized successfully");
+
+      const idToken = await liff.getIDToken();
+      console.log("ID Token obtained");
+
+      const response = await fetch('/', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      } 
+
+      const content = await response.text();
+      document.querySelector('body').innerHTML = content;
+    });
+  </script>
+</head>
+
+<body class="bg-gray-100 min-h-screen">
+  <div id="loading" class="flex items-center justify-center min-h-screen">
+    <div class="text-2xl font-semibold text-indigo-600">読み込み中...</div>
+  </div>
+</body>
+
+</html>
