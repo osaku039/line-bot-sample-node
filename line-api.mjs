@@ -40,7 +40,35 @@ class LineApi {
         }
       ]
     };
+    return await this.api.post('/bot/message/reply', body);
+  }
 
+  async replyBotton(replyToken, message) {
+    const body = {
+      replyToken,
+      messages: [
+        {
+          type: "template",
+          altText: "this is a confirm template",
+          template: {
+            type: "confirm",
+            text: message,
+            actions: [
+              {
+                type: "message",
+                label: "はい",
+                text: "はい"
+              },
+              {
+                type: "message",
+                label: "いいえ",
+                text: "いいえ"
+              }
+            ]
+          }
+        }
+      ]
+    };
     return await this.api.post('/bot/message/reply', body);
   }
   

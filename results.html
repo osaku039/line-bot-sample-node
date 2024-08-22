@@ -1,5 +1,30 @@
 <div id="content">
   <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-center mb-8 text-indigo-600">ビブリオフェス</h1>
+    <div class="bg-white shadow-md rounded-lg p-6">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-blue-100 p-4 rounded-lg text-center">
+          <h2 class="text-xl font-semibold mb-2">読んだ冊数</h2>
+          <p class="text-3xl font-bold text-blue-600">$TOTAL_BOOKS</p>
+        </div>
+        <div class="bg-green-100 p-4 rounded-lg text-center">
+          <h2 class="text-xl font-semibold mb-2">勝利数</h2>
+          <p class="text-3xl font-bold text-green-600">$WINS</p>
+        </div>
+        <div class="bg-red-100 p-4 rounded-lg text-center">
+          <h2 class="text-xl font-semibold mb-2">敗北数</h2>
+          <p class="text-3xl font-bold text-red-600">$LOSSES</p>
+        </div>
+      </div>
+      <h2 class="text-2xl font-semibold mb-4">対戦履歴</h2>
+      <div class="space-y-4">
+        $LOGS
+      </div>
+    </div>
+  </div>
+</div>
+<!-- <div id="content">
+  <div class="container mx-auto px-4 py-8">
     <h1 class="text-3xl font-bold text-center mb-8 text-indigo-600">$USER_NAMEさんの戦績</h1>
     <div class="bg-white shadow-md rounded-lg p-6">
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -22,4 +47,4 @@
       </div>
     </div>
   </div>
-</div>
+</div> -->

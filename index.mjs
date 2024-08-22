@@ -36,7 +36,7 @@ app.get('/', async (request, response, buf) => {
 
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const template = readFileSync('results.html').toString();
-    let html = template.replaceAll("$LIFF_ID", `'${process.env.LIFF_ID}'`);
+    let html = template.replaceAll("$LIFF_ID", `'${process.env.LIFF_ID_MYLOG}'`);
 
     const idToken = authHeader.substring(7);
     const verifyResponse = await lineApi.verify(idToken, process.env.CHANNEL_ID);
@@ -49,47 +49,53 @@ app.get('/', async (request, response, buf) => {
       console.log(userProfile.sub);
       const state = await datastore.load(userProfile.sub);
       console.log(state);
-      const results = state['results'] || [];
-      console.log(results);
+      //もしstate['logs']が存在すればその値を、存在しなければからの配列をlogsに代入している。
+      const logs = state['logs'] || [];
+      console.log(logs);
 
-      const totalGames = results.length;
-      const wins = results.filter(r => r.result === "負け").length;  // ユーザーの勝利はBOTの負け
-      const losses = results.filter(r => r.result === "勝ち").length;  // ユーザーの敗北はBOTの勝ち
+      const totalBooks = logs.length;
+      const wins = logs.filter(r => r.result === "負け").length;  // ユーザーの勝利はBOTの負け
+      const losses = logs.filter(r => r.result === "勝ち").length;  // ユーザーの敗北はBOTの勝ち
 
-      html = html.replace('$TOTAL_GAMES', totalGames);
+      html = html.replace('$TOTAL_BOOKS', totalBooks);
       html = html.replace('$WINS', wins);
       html = html.replace('$LOSSES', losses);
 
-      console.log(totalGames);
+      console.log(totalBooks);
 
-      if (results.length > 0) {
+      if (logs.length >= 0) {
         html = html.replace(
-          '$RESULTS',
-          results.map((result => {
+          '$LOGS',
+          logs.map((result => {
             const resultClass = result.result === "負け" ? "text-green-600" : (result.result === "勝ち" ? "text-red-600" : "text-yellow-600");
             return `
               <div class="bg-gray-50 p-4 rounded-lg">
                 <p class="font-semibold ${resultClass}">${result.result === "負け" ? "勝利" : (result.result === "勝ち" ? "敗北" : "引き分け")}</p>
-                <p>あなたの手: ${result.userHand} / BOTの手: ${result.botHand}</p>
+                <p>YourHands: ${result.userHand} / BOT'sHands: ${result.botHand}</p>
                 <p class="text-sm text-gray-500">${result.createdAt}</p>
               </div>
             `;
           })).join('\n')
         );
       } else {
-        html = html.replace('$RESULTS', '<p class="text-gray-500">まだ対戦履歴がありません。</p>');
+        html = html.replace('$LOGS', '<p class="text-gray-500">enoughだよー</p>');
       }
 
       response.status(200).send(html);
     }
   } else {
     const template = readFileSync('loading.html').toString();
-    let html = template.replaceAll("$LIFF_ID", `'${process.env.LIFF_ID}'`);
+    let html = template.replaceAll("$LIFF_ID", `'${process.env.LIFF_ID_MYLOG}'`);
 
     response.status(200).send(html);
   }
 });
 
+const userState = {};
+let bookTitle = "";
+let bookUrl = "";
+let bookImpressions = "";
+let bookLog = false;
 // webhookを受け取るエンドポイントを定義
 // POST /webhook
 app.post('/webhook', (request, response, buf) => {
@@ -109,82 +115,171 @@ app.post('/webhook', (request, response, buf) => {
   // 到着したイベントのevents配列から取りだし
   body.events.forEach(async (event) => {
     switch (event.type) {
-      case 'message':　// event.typeがmessageのとき応答
+      case 'message': // event.typeがmessageのとき応答
         if (event.source.type == "user") {
           const userId = event.source.userId;
+          const usermessage = event.message.text;
 
-          // BOTの手を選ぶ
-          const botHand = ["グー", "チョキ", "パー"][Math.floor(Math.random() * 3)];
-          const userHand = event.message.text;
+          if (usermessage == "記録"){
+            userState[userId] = "StertRecord"
+            bookLog = true;
+          }
+          if (bookLog == true){
+            await myLog(usermessage, userId, event);
+          }        
+          
+        }
+      }
+    }
+)}
+)
 
-          // 勝ち負け判定
-          const result = judge(botHand, userHand)
+async function myLog(usermessage, userId, event){
+  switch(userState[userId]){
+    case 'StertRecord':
+      userState[userId] = "WatingTitle"
+      await lineApi.replyMessage(
+        event.replyToken,
+        "題名は？"
+      );
+    break;
+    
+    case 'WatingTitle':
+      bookTitle = usermessage;
+      userState[userId] = "WatingisDigital"
+      await lineApi.replyBotton(
+        event.replyToken,
+        "web本ですか？"
+      )
+    break;
+    
+    case "WatingisDigital":
+      if (usermessage == "はい"){
+        userState[userId] = "WatingURL";
+        await lineApi.replyMessage(
+          event.replyToken,
+          "URLを記入してください"
+        )
+      }else if (usermessage == "いいえ"){
+        userState[userId] = "WatingImpressions"
+        await lineApi.replyMessage(
+          event.replyToken,
+          "感想をどうぞ"
+        )
+      }
+    break;
 
-          // 戦績を保存
-          const state = await datastore.load(userId);
-          console.log(userId);
-          await datastore.save(userId, {
-            results: [
+    case "WatingURL":
+      bookUrl = usermessage;
+      userState[userId] = "WatingImpressions"
+      await lineApi.replyMessage(
+        event.replyToken,
+        "感想をどうぞ"
+      )
+    break;
+
+    case "WatingImpressions":
+      bookImpressions = usermessage;
+      userState[userId] = "LogEnd"
+      bookLog = false;
+      const state = await datastore.load(userId);
+      await datastore.save(userId, {
+        BookLog: [
               {
-                result,
-                botHand,
-                userHand,
+                bookTitle,
+                bookUrl,
+                bookImpressions,
                 createdAt: formatDate(Date.now()),
               },
-              ...(state['results'] ?? []),
+              ...(state['logs'] ?? []),
             ],
           });
+      await lineApi.replyMessage(
+        event.replyToken,
+        "記録したよ"
+      )
+    break;
+  }  
+}
+
+
+
+
+          // // BOTの手を選ぶ
+          // const botHand = ["グー", "チョキ", "パー"][Math.floor(Math.random() * 3)];
+          // const userHand = event.message.text;s
+
+          // // 勝ち負け判定
+          // const result = judge(botHand, userHand)
+
+          // // 戦績を保存
+          // const state = await datastore.load(userId);
+          // console.log(userId);
+          // await datastore.save(userId, {
+          //   logs: [
+          //     {
+          //       result,
+          //       botHand,
+          //       userHand,
+          //       createdAt: formatDate(Date.now()),
+          //     },
+          //     ...(state['logs'] ?? []),
+          //   ],
+          // });
 
           // 返信
-          await lineApi.replyMessage(
-            event.replyToken,
-            createReplyText(result, botHand),
-          );
-        }
-        break;
-    }
-  });
+//           await lineApi.replyMessage(
+//             event.replyToken,
+//             createReplyText(result, botHand),
+            
+//           );
+//         }
+//         break;
+//     }
+//   });
 
-  response.status(200).send({});
-});
+//   response.status(200).send({});
+// });
 
-function createReplyText(result, botHand) {
-  const handEmoji = {
-    'グー': '✊',
-    'チョキ': '✌️',
-    'パー': '🖐️'
-  };
+// function createReplyText(result, botHand) {
+//   const handEmoji = {
+//     'グー': '✊',
+//     'チョキ': '✌️',
+//     'パー': '🖐️'
+//   };
 
-  const baseMessage = `BOTの手は${handEmoji[botHand]}${botHand}でした！\n`;
+//   const baseMessage = `BOTの手は${handEmoji[botHand]}${botHand}でした！\n`;
 
-  switch (result) {
-    case "勝ち":
-      return baseMessage + "BOTの勝ちです！😆 次は勝てるかな？";
-    case "負け":
-      return baseMessage + "あなたの勝ちです！🎉 さすがですね！";
-    case "引き分け":
-      return baseMessage + "引き分けです！😮 もう一回勝負しましょう！";
-    default:
-      return "手は「グー」「チョキ」「パー」の中から選んでね！";
-  }
-}
+//   switch (result) {
+//     case "勝ち":
+//       return baseMessage + "BOTの勝ちです！😆 次は勝てるかな？";
+//     case "負け":
+//       return baseMessage + "あなたの勝ちです！🎉 さすがですね！";
+//     case "引き分け":
+//       return baseMessage + "引き分けです！😮 もう一回勝負しましょう！";
+//     default:
+//       return "手は「グー」「チョキ」「パー」の中から選んでね！";
+//   }
+// }
 
-function judge(myHand, otherHand) {
-  const validHands = ['グー', 'チョキ', 'パー'];
-  const winCombos = {
-    'グー': 'チョキ',
-    'チョキ': 'パー',
-    'パー': 'グー'
-  };
+// //勝ち負けの判定
+// function judge(myHand, otherHand) {
+//   const validHands = ['グー', 'チョキ', 'パー'];
+//   const winCombos = {
+//     'グー': 'チョキ',
+//     'チョキ': 'パー',
+//     'パー': 'グー'
+//   };
 
-  // 有効な手かどうかをチェック
-  if (!validHands.includes(myHand) || !validHands.includes(otherHand)) {
-    return null;
-  }
+//   // 有効な手かどうかをチェック
+//   if (!validHands.includes(myHand) || !validHands.includes(otherHand)) {
+//     return null;
+//   }
 
-  if (myHand === otherHand) return "引き分け";
-  return winCombos[myHand] === otherHand ? "勝ち" : "負け";
-}
+//   //手が同じだったら引分け。キーがwinCombosと同じだったら勝ちとか負けとかやる
+//   if (myHand === otherHand) return "引き分け";
+//   return winCombos[myHand] === otherHand ? "勝ち" : "負け";
+// }
 
 function formatDate(timestamp) {
   const date = new Date(timestamp);
@@ -198,8 +293,8 @@ function formatDate(timestamp) {
   return `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`;
 }
 
-// webhookの署名検証
-// https://developers.line.biz/ja/reference/messaging-api/#signature-validation
+// // webhookの署名検証
+// // https://developers.line.biz/ja/reference/messaging-api/#signature-validation
 function verifySignature(body, receivedSignature, channelSecret) {
   const signature = crypto
     .createHmac("SHA256", channelSecret)

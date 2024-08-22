@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>じゃんけんの戦績</title>
+  <title>ビブリオフェス~~~!!!!</title>
+  <!-- LIFF SDK機能を使うためのCDNエッジパスを通している -->
   <script charset='utf-8' src='https://static.line-scdn.net/liff/edge/2/sdk.js'></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
@@ -15,9 +16,10 @@
   </style>
   <script>
     document.addEventListener("DOMContentLoaded", async function () {
+      // LIFFの初期化
       await liff.init({ liffId: $LIFF_ID });
       console.log("LIFF initialized successfully");
-
+      // IDトークンの取得
       const idToken = await liff.getIDToken();
       console.log("ID Token obtained");
 
