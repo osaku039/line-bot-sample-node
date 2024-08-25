@@ -5,11 +5,16 @@ import crypto from 'crypto';
 // 環境変数の定義を.envファイルから読み込む（開発用途用）
 import dotenv from 'dotenv';
 
+import { SearchBooks } from './search-books.mjs';
 import { LineApi } from './line-api.mjs';
+import { FesLiff } from './fes-liff.mjs';
+import { ShowMyLogsLiff } from './show-mylogs.mjs';
+import { ShowAllLogsLiff } from './show-all-logs.mjs';
 import { DataStore } from './data-store.mjs';
 import { fileURLToPath } from 'url';
 import * as path from 'path';
 import { readFileSync } from 'fs';
+import { log } from 'console';
 
 // .envファイル空環境変数を読み込み
 dotenv.config();
@@ -28,74 +33,62 @@ app.use(express.json({
 app.listen(8080);
 
 const lineApi = new LineApi(CHANNEL_ACCESS_TOKEN);
+const fesLiff = new FesLiff();
+const showMyLogs = new ShowMyLogsLiff();
+const showAllLogs = new ShowAllLogsLiff();
 const datastore = new DataStore();
+// const serchBooks = new SearchBooks();
 
-app.get('/', async (request, response, buf) => {
 
-  const authHeader = request.headers.authorization;
+app.get('*', async (request, response) => {
+  const path = request.path;
+  // const liffState = request.query['liff.state'];
+  // console.log(liffState);  // '/showMyLog' が表示される  
+  //console.log(request);
+  //console.log(response);
+  //console.log(path2);  // '/?liff.state=%2FshowMyLog' が表示される
+  //console.log(path);
 
-  if (authHeader && authHeader.startsWith('Bearer ')) {
-    const template = readFileSync('results.html').toString();
-    let html = template.replaceAll("$LIFF_ID", `'${process.env.LIFF_ID_MYLOG}'`);
 
-    const idToken = authHeader.substring(7);
-    const verifyResponse = await lineApi.verify(idToken, process.env.CHANNEL_ID);
-    if (verifyResponse.status === 200) {
-      const userProfile = verifyResponse.data;
-      console.log('User Profile:', userProfile);
+  switch (path) {
+    case '/showMyLog':
+      console.log("showmylog");
+      await showMyLogs.myLogs(request, response, datastore);
+      break;
 
-      html = html.replaceAll('$USER_NAME', userProfile.name);
+    case '/fes':
+      console.log("fesliff");
+      await fesLiff.fes(request, response, datastore);
+      break;
 
-      console.log(userProfile.sub);
-      const state = await datastore.load(userProfile.sub);
-      console.log(state);
-      //もしstate['logs']が存在すればその値を、存在しなければからの配列をlogsに代入している。
-      const logs = state['logs'] || [];
-      console.log(logs);
+    case '/showAllLog':
+      console.log("showAllLog");
+      await showAllLogs.allLogs(request, response, datastore);
+      break;
+    
+    case '/':
+      console.log("fesliff");
+      await fesLiff.fes(request, response, datastore);
+      break;
 
-      const totalBooks = logs.length;
-      const wins = logs.filter(r => r.result === "負け").length;  // ユーザーの勝利はBOTの負け
-      const losses = logs.filter(r => r.result === "勝ち").length;  // ユーザーの敗北はBOTの勝ち
+    case '/vote':
+      console.log("vote");
+      await datastore.vote(request.headers.vote_result);
+      break;
 
-      html = html.replace('$TOTAL_BOOKS', totalBooks);
-      html = html.replace('$WINS', wins);
-      html = html.replace('$LOSSES', losses);
-
-      console.log(totalBooks);
-
-      if (logs.length >= 0) {
-        html = html.replace(
-          '$LOGS',
-          logs.map((result => {
-            const resultClass = result.result === "負け" ? "text-green-600" : (result.result === "勝ち" ? "text-red-600" : "text-yellow-600");
-            return `
-              <div class="bg-gray-50 p-4 rounded-lg">
-                <p class="font-semibold ${resultClass}">${result.result === "負け" ? "勝利" : (result.result === "勝ち" ? "敗北" : "引き分け")}</p>
-                <p>YourHands: ${result.userHand} / BOT'sHands: ${result.botHand}</p>
-                <p class="text-sm text-gray-500">${result.createdAt}</p>
-              </div>
-            `;
-          })).join('\n')
-        );
-      } else {
-        html = html.replace('$LOGS', '<p class="text-gray-500">enoughだよー</p>');
-      }
-
-      response.status(200).send(html);
-    }
-  } else {
-    const template = readFileSync('loading.html').toString();
-    let html = template.replaceAll("$LIFF_ID", `'${process.env.LIFF_ID_MYLOG}'`);
-
-    response.status(200).send(html);
+    default:
+      console.log("other");
+      response.status(404).send('Not Found');
   }
 });
+
 
 const userState = {};
 let bookTitle = "";
 let bookUrl = "";
 let bookImpressions = "";
 let bookLog = false;
+let bookCover = "";
 // webhookを受け取るエンドポイントを定義
 // POST /webhook
 app.post('/webhook', (request, response, buf) => {
@@ -127,9 +120,24 @@ app.post('/webhook', (request, response, buf) => {
           if (bookLog == true){
             await myLog(usermessage, userId, event);
           }        
-          
         }
+      break;
+      case "postback":
+        if (event.source.type == "user") {
+          const userId = event.source.userId;
+          const data = new URLSearchParams(event.postback.data);
+          bookTitle = data.get('title');
+          bookCover = decodeURIComponent(data.get('image'));
+
+          userState[userId] = "WatingImpressions"
+          await lineApi.replyMessage(
+            event.replyToken,
+            "感想をどうぞ"
+          )
+        }
+        break;
       }
+      
     }
 )}
 )
@@ -156,15 +164,55 @@ async function myLog(usermessage, userId, event){
     case "WatingisDigital":
       if (usermessage == "はい"){
         userState[userId] = "WatingURL";
+        bookCover = "https://i.ibb.co/1np5tmC/25480354.png";
         await lineApi.replyMessage(
           event.replyToken,
           "URLを記入してください"
         )
       }else if (usermessage == "いいえ"){
-        userState[userId] = "WatingImpressions"
-        await lineApi.replyMessage(
+        console.log("とりまここ")
+
+        const items = await SearchBooks(bookTitle);
+
+        const columns = items.map(item => ({
+          thumbnailImageUrl: item.image.replace('http://', 'https://'),
+          imageBackgroundColor: "#FFFFFF",
+          title:  item.title.length > 20 ? item.title.slice(0, 17) + '...' : item.title,
+          text: "Book Cover",
+          defaultAction: {
+            "type": "postback",
+            "label": "表紙はこれ！",
+            "data": `title=${item.title}&image=${encodeURIComponent(item.image.replace('http://', 'https://'))}`
+          },
+          actions: [
+            {
+              "type": "postback",
+              "label": "表紙はこれ！",
+              "data": `title=${item.title}&image=${encodeURIComponent(item.image.replace('http://', 'https://'))}`
+            }
+          ]
+        }));
+        columns.push({
+          thumbnailImageUrl: "https://i.ibb.co/1np5tmC/25480354.png",
+          imageBackgroundColor: "#FFFFFF",
+          title: bookTitle,
+          text: "Book Cover",
+          defaultAction: {
+            type: "postback",
+            label: "表紙みつからなかった",
+            data: `title=${bookTitle}&image=${encodeURIComponent("https://i.ibb.co/1np5tmC/25480354.png")}`
+          },
+          actions: [
+            {
+              type: "postback",
+              label: "表紙みつからなかった",
+              data: `title=${bookTitle}&image=${encodeURIComponent("https://i.ibb.co/1np5tmC/25480354.png")}`
+            }
+          ]
+        });
+        await lineApi.replyBookCover(
           event.replyToken,
-          "感想をどうぞ"
+          columns,
         )
       }
     break;
@@ -189,9 +237,21 @@ async function myLog(usermessage, userId, event){
                 bookTitle,
                 bookUrl,
                 bookImpressions,
+                bookCover,
                 createdAt: formatDate(Date.now()),
               },
-              ...(state['logs'] ?? []),
+              ...(state['BookLog'] ?? []),
+            ],
+          });
+      await datastore.save_global({
+        BookLog: [
+              {
+                bookTitle,
+                bookUrl,
+                bookImpressions,
+                bookCover,
+                createdAt: formatDate(Date.now()),
+              },
             ],
           });
       await lineApi.replyMessage(
@@ -201,85 +261,6 @@ async function myLog(usermessage, userId, event){
     break;
   }  
 }
-
-
-
-
-          // // BOTの手を選ぶ
-          // const botHand = ["グー", "チョキ", "パー"][Math.floor(Math.random() * 3)];
-          // const userHand = event.message.text;s
-
-          // // 勝ち負け判定
-          // const result = judge(botHand, userHand)
-
-          // // 戦績を保存
-          // const state = await datastore.load(userId);
-          // console.log(userId);
-          // await datastore.save(userId, {
-          //   logs: [
-          //     {
-          //       result,
-          //       botHand,
-          //       userHand,
-          //       createdAt: formatDate(Date.now()),
-          //     },
-          //     ...(state['logs'] ?? []),
-          //   ],
-          // });
-
-          // 返信
-//           await lineApi.replyMessage(
-//             event.replyToken,
-//             createReplyText(result, botHand),
-            
-//           );
-//         }
-//         break;
-//     }
-//   });
-
-//   response.status(200).send({});
-// });
-
-// function createReplyText(result, botHand) {
-//   const handEmoji = {
-//     'グー': '✊',
-//     'チョキ': '✌️',
-//     'パー': '🖐️'
-//   };
-
-//   const baseMessage = `BOTの手は${handEmoji[botHand]}${botHand}でした！\n`;
-
-//   switch (result) {
-//     case "勝ち":
-//       return baseMessage + "BOTの勝ちです！😆 次は勝てるかな？";
-//     case "負け":
-//       return baseMessage + "あなたの勝ちです！🎉 さすがですね！";
-//     case "引き分け":
-//       return baseMessage + "引き分けです！😮 もう一回勝負しましょう！";
-//     default:
-//       return "手は「グー」「チョキ」「パー」の中から選んでね！";
-//   }
-// }
-
-// //勝ち負けの判定
-// function judge(myHand, otherHand) {
-//   const validHands = ['グー', 'チョキ', 'パー'];
-//   const winCombos = {
-//     'グー': 'チョキ',
-//     'チョキ': 'パー',
-//     'パー': 'グー'
-//   };
-
-//   // 有効な手かどうかをチェック
-//   if (!validHands.includes(myHand) || !validHands.includes(otherHand)) {
-//     return null;
-//   }
-
-//   //手が同じだったら引分け。キーがwinCombosと同じだったら勝ちとか負けとかやる
-//   if (myHand === otherHand) return "引き分け";
-//   return winCombos[myHand] === otherHand ? "勝ち" : "負け";
-// }
 
 function formatDate(timestamp) {
   const date = new Date(timestamp);
@@ -302,3 +283,4 @@ function verifySignature(body, receivedSignature, channelSecret) {
     .digest("base64");
   return signature === receivedSignature;
 }
+

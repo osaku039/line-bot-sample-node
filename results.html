@@ -1,50 +1,84 @@
 <div id="content">
   <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-center mb-8 text-indigo-600">ビブリオフェス</h1>
-    <div class="bg-white shadow-md rounded-lg p-6">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div class="bg-blue-100 p-4 rounded-lg text-center">
-          <h2 class="text-xl font-semibold mb-2">読んだ冊数</h2>
-          <p class="text-3xl font-bold text-blue-600">$TOTAL_BOOKS</p>
-        </div>
-        <div class="bg-green-100 p-4 rounded-lg text-center">
-          <h2 class="text-xl font-semibold mb-2">勝利数</h2>
-          <p class="text-3xl font-bold text-green-600">$WINS</p>
-        </div>
-        <div class="bg-red-100 p-4 rounded-lg text-center">
-          <h2 class="text-xl font-semibold mb-2">敗北数</h2>
-          <p class="text-3xl font-bold text-red-600">$LOSSES</p>
-        </div>
-      </div>
-      <h2 class="text-2xl font-semibold mb-4">対戦履歴</h2>
-      <div class="space-y-4">
-        $LOGS
+    <h1 style="color: #166534;" class="text-3xl font-bold text-center mb-8">ビブリオフェス</h1>
+    <h2 style="color: #404040;" class="text-3xl font-bold text-center mb-8">今週のお題</h2>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 space-4 gap-4 mb-6">
+
+      <div class="flex justify-between space-x-2">
+        <button data-modal-target="popup-modal" data-modal-toggle="popup-modal" type="button">
+          <div style="border-color: #2e7b51" class="rounded-xl border-4 shadow-2xl">
+            <div style="background-color: #eaeaea"class="p-4 rounded-lg text-center">
+              <h2 class="text-xl font-semibold mb-2">本1</h2>
+              <p style="color: #2e7b51" class="text-xl font-bold text-green-600">$BOOK1</p>
+            </div>
+          </div>
+        </button>
+        
+        <button data-modal-target="popup-modal2" data-modal-toggle="popup-modal2" type="button">
+          <div style="border-color: #f2c46c" class="rounded-xl border-4">
+            <div style="background-color: #eaeaea"class="p-4 rounded-lg text-center shadow-2xl">
+              <h2 class="text-xl font-semibold mb-2">本2</h2>
+              <p style="color: #f2c46c" class="text-xl font-bold text-red-600">$BOOK2</p>
+            </div>
+          </div>
+        </button>
       </div>
     </div>
+
+    <div style="background-color: #f2c46c; border-color: #fff5e2" class="border w-full text-white rounded-full dark:bg-gray-700 flex text-r">
+      $GRAPH $RATE
+    </div>
+      
+  
+  <div id="popup-modal" tabindex="-1" class=" overflow-y-auto hidden overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+      <div class="relative p-4 w-full max-w-md max-h-full">
+          <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+              <button type="button" class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="popup-modal">
+                  <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                  </svg>
+                  <span class="sr-only">Close modal</span>
+              </button>
+              <div class="p-4 md:p-5 text-center">
+                  <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">投票しますか?</br>投票先：$BOOK1</h3>
+                  <button data-modal-target="vote1" data-modal-hide="popup-modal" type="button" class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
+                      投票する
+                  </button>
+              </div>
+          </div>
+      </div>
+  
+    </div>
+
+    <div id="popup-modal2" tabindex="-1" class=" overflow-y-auto hidden overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
+      <div class="relative p-4 w-full max-w-md max-h-full">
+          <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
+              <button type="button" class="absolute top-3 end-2.5 text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white" data-modal-hide="popup-modal2">
+                  <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
+                      <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6"/>
+                  </svg>
+                  <span class="sr-only">Close modal</span>
+              </button>
+              <div class="p-4 md:p-5 text-center">
+                  <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">投票しますか?</br>投票先：$BOOK2</h3>
+                  <button data-modal-target="vote2" data-modal-hide="popup-modal2" type="button" class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
+                      投票する
+                  </button>
+              </div>
+          </div>
+      </div>
+  
+    </div>
+    
+
+    <hr style="border-color: #FFF5E2" class="w-3/4 h-8px my-3 mx-auto border-2">
+
+    <h2 class="text-2xl font-semibold mb-4 text-white text-center">みんなの感想</h2>
+    <div class="space-y-4">
+      $LOGS
+    </div>
+
+
   </div>
 </div>
-<!-- <div id="content">
-  <div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-center mb-8 text-indigo-600">$USER_NAMEさんの戦績</h1>
-    <div class="bg-white shadow-md rounded-lg p-6">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div class="bg-blue-100 p-4 rounded-lg text-center">
-          <h2 class="text-xl font-semibold mb-2">総対戦回数</h2>
-          <p class="text-3xl font-bold text-blue-600">$TOTAL_GAMES</p>
-        </div>
-        <div class="bg-green-100 p-4 rounded-lg text-center">
-          <h2 class="text-xl font-semibold mb-2">勝利数</h2>
-          <p class="text-3xl font-bold text-green-600">$WINS</p>
-        </div>
-        <div class="bg-red-100 p-4 rounded-lg text-center">
-          <h2 class="text-xl font-semibold mb-2">敗北数</h2>
-          <p class="text-3xl font-bold text-red-600">$LOSSES</p>
-        </div>
-      </div>
-      <h2 class="text-2xl font-semibold mb-4">対戦履歴</h2>
-      <div class="space-y-4">
-        $RESULTS
-      </div>
-    </div>
-  </div>
-</div> -->

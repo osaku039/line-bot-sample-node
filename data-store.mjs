@@ -1,23 +1,66 @@
-
 // LINE APIのラッパー
 class DataStore {
   data = {};
+  vote = [0,0,0];
+  
+  constructor() {
+    // 初期化
+    this.vote = [10, 6, 4];
+  }
 
   // データの保存
   async save(userId, data) {
     this.data[userId] = data;
   }
+  // async save_global(data) {
+  //   this.data['global'] = data;
+  // }
+  
   async save_global(data) {
-    this.data['global'] = data;
-  }
+    // グローバルデータが存在しない場合、新しいオブジェクトを作成
+    if (!this.data['global']) {
+        this.data['global'] = { BookLog: [] };
+    }
+
+    // 既存のBookLogに新しいデータを追加
+    this.data['global'].BookLog = [
+        ...data.BookLog,
+        ...(this.data['global'].BookLog || [])
+    ];
+
+    // 最新の10件に絞る（必要に応じて）
+    //this.data['global'].BookLog = this.data['global'].BookLog.slice(0, 10);
+}
 
   // データの読み出し
   async load(userId) {
     return this.data[userId] ?? {};
   }
-  async load_global(data) {
+
+
+  async load_global() {
     return this.data['global'] ?? {};
   }
+
+  async start_vote() {
+    if (!this.vote) {
+      this.vote = [10,6,4];
+  }
+  }
+
+  async vote(which) {
+    this.vote[0]++;
+    if (which == 1) {
+      this.vote[1]++;
+    }else if (which == 2) {
+      this.vote[2]++;
+    }
+  }
+
+  async load_vote() {
+    return this.vote;
+  }
+
 }
 
 export {

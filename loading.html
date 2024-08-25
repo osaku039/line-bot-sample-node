@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ビブリオフェス~~~!!!!</title>
+  <title>$TITLE</title>
   <!-- LIFF SDK機能を使うためのCDNエッジパスを通している -->
   <script charset='utf-8' src='https://static.line-scdn.net/liff/edge/2/sdk.js'></script>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -18,12 +18,15 @@
     document.addEventListener("DOMContentLoaded", async function () {
       // LIFFの初期化
       await liff.init({ liffId: $LIFF_ID });
+      console.log(liff.state);
       console.log("LIFF initialized successfully");
       // IDトークンの取得
       const idToken = await liff.getIDToken();
       console.log("ID Token obtained");
 
-      const response = await fetch('/', {
+      const send = $SEND;
+
+      const response = await fetch(send, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -37,7 +40,65 @@
 
       const content = await response.text();
       document.querySelector('body').innerHTML = content;
+      const imageUrl = 'https://i.ibb.co/3v6W5hm/back-Ground.png';
+      const body = document.querySelector('body');
+      body.style.backgroundImage = `url(${imageUrl})`;
+      body.style.backgroundSize = 'cover';
+      body.style.backgroundAttachment = 'fixed'; 
+      body.style.backgroundPosition = 'center';
+      body.style.backgroundRepeat = 'no-repeat';
+
+      document.querySelectorAll('[data-modal-target]').forEach(button => {
+          const targetId = button.getAttribute('data-modal-target');
+          const modal = document.getElementById(targetId);
+          console.log("targetId")
+
+          button.addEventListener('click', () => {
+              if (modal == "vote1") {
+                console.log("vote1");
+                const response = fetch('/vote', {
+                  method: 'GET',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken}`,
+                    'vote_result': `1`
+                  },
+                });
+              }
+              else if (modal == "vote2") {
+                const response = fetch('/vote', {
+                  method: 'GET',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken}`,
+                    'vote_result': `2`
+                  },
+                });
+              }
+
+              if (modal) {
+                  modal.classList.toggle('hidden');
+              }
+          });
+      });
+
+      document.querySelectorAll('[data-modal-hide]').forEach(button => {
+          const targetId = button.getAttribute('data-modal-hide');
+          const modal = document.getElementById(targetId);
+
+          button.addEventListener('click', () => {
+              if (modal) {
+                  modal.classList.add('hidden');
+              }
+          });
+      });
+
     });
+  </script>  
+  <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+  <script>
+    // VConsole will be exported to `window.VConsole` by default.
+    var vConsole = new window.VConsole();
   </script>
 </head>
 

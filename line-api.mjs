@@ -71,6 +71,31 @@ class LineApi {
     };
     return await this.api.post('/bot/message/reply', body);
   }
+
+  async replyBookCover(replyToken, columns) {
+    const body = {
+      replyToken,
+      messages: [
+        {
+          type: "template",
+          altText: "this is a carousel template",
+          template: {
+            type: "carousel",
+            columns: columns,
+            imageAspectRatio: "rectangle",
+            imageSize: "cover"
+          }
+        }
+      ]
+    };
+    // return await this.api.post('/bot/message/reply', body);
+    try {
+      const response = await this.api.post('/bot/message/reply', body);
+      console.log(response);
+    } catch (error) {
+      console.error('Error response:', error.response?.data || error.message);
+    }
+  }
   
   async verify(idToken, clientId) {
     var params = new URLSearchParams();
