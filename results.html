@@ -6,19 +6,19 @@
     <div class="grid grid-cols-1 md:grid-cols-3 space-4 gap-4 mb-6">
 
       <div class="flex justify-between space-x-2">
-        <button data-modal-target="popup-modal" data-modal-toggle="popup-modal" type="button">
+        <button data-modal-target="popup-modal" data-modal-toggle="popup-modal" class="w-1/2" type="button">
           <div style="border-color: #2e7b51" class="rounded-xl border-4 shadow-2xl">
             <div style="background-color: #eaeaea"class="p-4 rounded-lg text-center">
-              <h2 class="text-xl font-semibold mb-2">本1</h2>
+              <img class="rounded-lg" src=$IMG1 alt="" />
               <p style="color: #2e7b51" class="text-xl font-bold text-green-600">$BOOK1</p>
             </div>
           </div>
         </button>
         
-        <button data-modal-target="popup-modal2" data-modal-toggle="popup-modal2" type="button">
+        <button data-modal-target="popup-modal2" data-modal-toggle="popup-modal2" class="w-1/2" type="button">
           <div style="border-color: #f2c46c" class="rounded-xl border-4">
             <div style="background-color: #eaeaea"class="p-4 rounded-lg text-center shadow-2xl">
-              <h2 class="text-xl font-semibold mb-2">本2</h2>
+              <img class="rounded-lg" src=$IMG2 alt="" />
               <p style="color: #f2c46c" class="text-xl font-bold text-red-600">$BOOK2</p>
             </div>
           </div>
@@ -26,7 +26,7 @@
       </div>
     </div>
 
-    <div style="background-color: #f2c46c; border-color: #fff5e2" class="border w-full text-white rounded-full dark:bg-gray-700 flex text-r">
+    <div style="background-color: #f2c46c; border-color: #fff5e2" class="border w-full text-white font-bold rounded-full dark:bg-gray-700 flex">
       $GRAPH $RATE
     </div>
       
@@ -42,7 +42,7 @@
               </button>
               <div class="p-4 md:p-5 text-center">
                   <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">投票しますか?</br>投票先：$BOOK1</h3>
-                  <button data-modal-target="vote1" data-modal-hide="popup-modal" type="button" class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
+                  <button data-modal-target="vote1" data-modal-hide="popup-modal" style="background-color: #2e7b51;" type="button" class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
                       投票する
                   </button>
               </div>
@@ -62,7 +62,7 @@
               </button>
               <div class="p-4 md:p-5 text-center">
                   <h3 class="mb-5 text-lg font-normal text-gray-500 dark:text-gray-400">投票しますか?</br>投票先：$BOOK2</h3>
-                  <button data-modal-target="vote2" data-modal-hide="popup-modal2" type="button" class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
+                  <button data-modal-target="vote2" data-modal-hide="popup-modal2" style="background-color: #f2c46c;" type="button" class="text-white bg-red-600 hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 font-medium rounded-lg text-sm inline-flex items-center px-5 py-2.5 text-center">
                       投票する
                   </button>
               </div>
@@ -72,10 +72,10 @@
     </div>
     
 
-    <hr style="border-color: #FFF5E2" class="w-3/4 h-8px my-3 mx-auto border-2">
+    <hr style="border-color: #FFF5E2" class="w-3/4 h-8px my-10 mx-auto border-2">
 
     <h2 class="text-2xl font-semibold mb-4 text-white text-center">みんなの感想</h2>
-    <div class="space-y-4">
+    <div class="grid gap-4">
       $LOGS
     </div>
 

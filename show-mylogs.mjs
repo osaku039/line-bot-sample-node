@@ -47,8 +47,8 @@ class ShowMyLogsLiff {
                 const linkStart = result.bookUrl !== "" ? `<a href="${result.bookUrl}" target="_blank" rel="noopener noreferrer">` : '';
                 const linkEnd = result.bookUrl !== "" ? `</a>` : '';
                 return `
-                    ${linkStart}
                     <div class="rounded-xl border-4 ${boderColor} shadow-2xl">
+                    ${linkStart}
                     <div
                     class="flex flex-row rounded-lg bg-white text-surface shadow-secondary-1 dark:bg-surface-dark dark:text-white md:max-w-xl md:flex-row">
                     <div class=" w-32 h-full p-4">
@@ -72,13 +72,13 @@ class ShowMyLogsLiff {
                     <p class="mb-4 text-base font-extralight">${result.bookImpressions}</p>
                     </div>
                     </div>
-                    </div>
                     ${linkEnd}
+                    </div>
                 `;
                 })).join('\n')
             );
             } else {
-            html = html.replace('$LOGS', '<p class="text-gray-500">enoughだよー</p>');
+            html = html.replace('$LOGS', '');
             }
 
             response.status(200).send(html);

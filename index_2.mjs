@@ -39,7 +39,6 @@ const showAllLogs = new ShowAllLogsLiff();
 const datastore = new DataStore();
 // const serchBooks = new SearchBooks();
 
-
 app.get('*', async (request, response) => {
   const path = request.path;
 
@@ -76,103 +75,96 @@ app.get('*', async (request, response) => {
   }
 });
 
+const userState = {};  // 各ユーザーの状態を保持するオブジェクト
+const userBookData = {};  // 各ユーザーの書籍データを保持するオブジェクト
 
-const userState = {};
-let bookTitle = "";
-let bookUrl = "";
-let bookImpressions = "";
-let bookLog = false;
-let bookCover = "";
-// webhookを受け取るエンドポイントを定義
-// POST /webhook
-app.post('/webhook', (request, response, buf) => {
-  // https://developers.line.biz/ja/docs/messaging-api/receiving-messages/
-
-  // 受け取ったwebhookのイベント
+// webhookを受け取るエンドポイント
+app.post('/webhook', async (request, response) => {
   const body = request.body;
-  // デバッグ用として出力
-  console.log(body);
 
-  // 署名検証（全くの第三者がリクエストを送ってきたときの対策＝なくても動くが本番環境では大事）
+  // 署名検証
   if (!verifySignature(request.rawBody, request.headers['x-line-signature'], CHANNEL_SECRET)) {
     response.status(401).send({});
     return;
   }
 
-  // 到着したイベントのevents配列から取りだし
   body.events.forEach(async (event) => {
+    const userId = event.source.userId;
+
+    if (!userState[userId]) {
+      userState[userId] = "StertRecord";  // ユーザーの初期状態を設定
+      userBookData[userId] = {};  // ユーザーの書籍データを初期化
+    }
+
     switch (event.type) {
-      case 'message': // event.typeがmessageのとき応答
+      case 'message':
         if (event.source.type == "user") {
-          const userId = event.source.userId;
           const usermessage = event.message.text;
 
-          if (usermessage == "記録"){
-            userState[userId] = "StertRecord"
-            bookLog = true;
-          }
-          if (bookLog == true){
+          if (usermessage == "記録") {
+            userState[userId] = "StertRecord";
+            userBookData[userId] = {}; 
             await myLog(usermessage, userId, event);
-          }        
+          } else if (userState[userId]) {
+            await myLog(usermessage, userId, event);
+          }
         }
-      break;
+        break;
+
       case "postback":
         if (event.source.type == "user") {
-          const userId = event.source.userId;
           const data = new URLSearchParams(event.postback.data);
-          bookTitle = data.get('title');
-          bookCover = decodeURIComponent(data.get('image'));
+          userBookData[userId].title = data.get('title');
+          userBookData[userId].cover = decodeURIComponent(data.get('image'));
 
-          userState[userId] = "WatingImpressions"
+          userState[userId] = "WatingImpressions";
           await lineApi.replyMessage(
             event.replyToken,
             "感想をどうぞ"
-          )
+          );
         }
         break;
-      }
-      
     }
-)}
-)
+  });
 
-async function myLog(usermessage, userId, event){
-  switch(userState[userId]){
+  response.sendStatus(200); // LINEのAPIに対してリクエストが成功したことを伝える
+});
+
+async function myLog(usermessage, userId, event) {
+  switch (userState[userId]) {
     case 'StertRecord':
-      userState[userId] = "WatingTitle"
+      userState[userId] = "WatingTitle";
       await lineApi.replyMessage(
         event.replyToken,
         "題名は？"
       );
-    break;
-    
+      break;
+
     case 'WatingTitle':
-      bookTitle = usermessage;
-      userState[userId] = "WatingisDigital"
+      userBookData[userId].title = usermessage;
+      userState[userId] = "WatingisDigital";
       await lineApi.replyBotton(
         event.replyToken,
         "web本ですか？"
-      )
-    break;
-    
+      );
+      break;
+
     case "WatingisDigital":
-      if (usermessage == "はい"){
+      if (usermessage == "はい") {
         userState[userId] = "WatingURL";
-        bookCover = "https://i.ibb.co/1np5tmC/25480354.png";
+        userBookData[userId].cover = "https://i.ibb.co/1np5tmC/25480354.png";
         await lineApi.replyMessage(
           event.replyToken,
           "URLを記入してください"
-        )
-      }else if (usermessage == "いいえ"){
-        console.log("とりまここ")
-        console.log(bookTitle)
-
-        const items = await SearchBooks(bookTitle);
+        );
+      } else if (usermessage == "いいえ") {
+        const items = await SearchBooks(userBookData[userId].title);
+        userBookData[userId].url = ""
 
         const columns = items.map(item => ({
           thumbnailImageUrl: item.image.replace('http://', 'https://'),
           imageBackgroundColor: "#FFFFFF",
-          title:  item.title.length > 20 ? item.title.slice(0, 17) + '...' : item.title,
+          title: item.title.length > 20 ? item.title.slice(0, 17) + '...' : item.title,
           text: "Book Cover",
           defaultAction: {
             "type": "postback",
@@ -190,85 +182,91 @@ async function myLog(usermessage, userId, event){
         columns.push({
           thumbnailImageUrl: "https://i.ibb.co/1np5tmC/25480354.png",
           imageBackgroundColor: "#FFFFFF",
-          title: bookTitle,
+          title: userBookData[userId].title,
           text: "Book Cover",
           defaultAction: {
             type: "postback",
             label: "表紙みつからなかった",
-            data: `title=${bookTitle}&image=${encodeURIComponent("https://i.ibb.co/1np5tmC/25480354.png")}`
+            data: `title=${userBookData[userId].title}&image=${encodeURIComponent("https://i.ibb.co/1np5tmC/25480354.png")}`
           },
           actions: [
             {
               type: "postback",
               label: "表紙みつからなかった",
-              data: `title=${bookTitle}&image=${encodeURIComponent("https://i.ibb.co/1np5tmC/25480354.png")}`
+              data: `title=${userBookData[userId].title}&image=${encodeURIComponent("https://i.ibb.co/1np5tmC/25480354.png")}`
             }
           ]
         });
         await lineApi.replyBookCover(
           event.replyToken,
           columns,
-        )
+        );
       }
-    break;
+      break;
 
     case "WatingURL":
-      bookUrl = usermessage;
-      userState[userId] = "WatingImpressions"
+      userBookData[userId].url = usermessage;
+      userState[userId] = "WatingImpressions";
       await lineApi.replyMessage(
         event.replyToken,
         "感想をどうぞ"
-      )
-    break;
+      );
+      break;
 
     case "WatingImpressions":
-      bookImpressions = usermessage;
-      userState[userId] = "LogEnd"
-      bookLog = false;
-      const state = await datastore.load(userId);
+      userBookData[userId].impressions = usermessage;
+      userState[userId] = "LogEnd";
 
+      const state = await datastore.load(userId);
+      console.log("userBookData[userId].url = " + userBookData[userId].url)
+      // if (userBookData[userId].url == "undefined"){
+      //   userBookData[userId].url = "";
+      // }
       await datastore.save(userId, {
         BookLog: [
-              {
-                bookTitle,
-                bookUrl,
-                bookImpressions,
-                bookCover,
-                createdAt: formatDate(Date.now()),
-              },
-              ...(state['BookLog'] ?? []),
-            ],
-          });
+          {
+            bookTitle: userBookData[userId].title,
+            bookUrl: userBookData[userId].url,
+            bookImpressions: userBookData[userId].impressions,
+            bookCover: userBookData[userId].cover,
+            createdAt: formatDate(Date.now()),
+          },
+          ...(state['BookLog'] ?? []),
+        ],
+      });
+
       await datastore.save_global({
         BookLog: [
-              {
-                bookTitle,
-                bookUrl,
-                bookImpressions,
-                bookCover,
-                createdAt: formatDate(Date.now()),
-              },
-            ],
-          });
-          bookUrl="";
+          {
+            bookTitle: userBookData[userId].title,
+            bookUrl: userBookData[userId].url,
+            bookImpressions: userBookData[userId].impressions,
+            bookCover: userBookData[userId].cover,
+            createdAt: formatDate(Date.now()),
+          },
+        ],
+      });
+
+      // 初期化
+      delete userState[userId];
+      delete userBookData[userId];
+
       await lineApi.replyMessage(
         event.replyToken,
         "記録したよ"
-      )
+      );
 
-      
       const state_global = await datastore.load_global();
       const state_fes = await datastore.load_fes();
       const log_global = state_global['BookLog'] || [];
       const isStateFesEmpty = Object.keys(state_fes).length === 0;
-      console.log(state_fes);
 
       if ((log_global.length === 2) && isStateFesEmpty) {
         console.log("フェス始めます!");
         await startFes(event);
       }
-    break;
-  }  
+      break;
+  }
 }
 
 function formatDate(timestamp) {
@@ -283,17 +281,13 @@ function formatDate(timestamp) {
   return `${year}年${month}月${day}日 ${hours}:${minutes}:${seconds}`;
 }
 
-async function startFes (event){
-  
+async function startFes(event) {
   console.log("ビブリオフェス開催");
   const data = await datastore.load_global();
   console.log(data);
   await datastore.make_fes(data);
-
 }
 
-// // webhookの署名検証
-// // https://developers.line.biz/ja/reference/messaging-api/#signature-validation
 function verifySignature(body, receivedSignature, channelSecret) {
   const signature = crypto
     .createHmac("SHA256", channelSecret)
@@ -301,4 +295,3 @@ function verifySignature(body, receivedSignature, channelSecret) {
     .digest("base64");
   return signature === receivedSignature;
 }
-

@@ -1,11 +1,11 @@
 // LINE APIのラッパー
 class DataStore {
   data = {};
-  vote = [0,0,0];
+  vote = [2,1,1];
   
   constructor() {
     // 初期化
-    this.vote = [10, 6, 4];
+    this.vote = [2, 1, 1];
   }
 
   // データの保存
@@ -30,7 +30,11 @@ class DataStore {
 
     // 最新の10件に絞る（必要に応じて）
     //this.data['global'].BookLog = this.data['global'].BookLog.slice(0, 10);
-}
+  }
+
+  async make_fes(data) {
+    this.data['fes'] = data;
+  }
 
   // データの読み出し
   async load(userId) {
@@ -42,17 +46,21 @@ class DataStore {
     return this.data['global'] ?? {};
   }
 
+  async load_fes() {
+    return this.data['fes'] ?? {};
+  }
+
   async start_vote() {
     if (!this.vote) {
-      this.vote = [10,6,4];
+      this.vote = [2, 1, 1];
   }
   }
 
-  async vote(which) {
+  async voting(which) {
     this.vote[0]++;
-    if (which == 1) {
+    if (which == '1') {
       this.vote[1]++;
-    }else if (which == 2) {
+    }else if (which == '2') {
       this.vote[2]++;
     }
   }

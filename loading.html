@@ -51,10 +51,11 @@
       document.querySelectorAll('[data-modal-target]').forEach(button => {
           const targetId = button.getAttribute('data-modal-target');
           const modal = document.getElementById(targetId);
-          console.log("targetId")
 
           button.addEventListener('click', () => {
-              if (modal == "vote1") {
+            
+            console.log(targetId);
+              if (targetId == "vote1") {
                 console.log("vote1");
                 const response = fetch('/vote', {
                   method: 'GET',
@@ -65,7 +66,7 @@
                   },
                 });
               }
-              else if (modal == "vote2") {
+              else if (targetId == "vote2") {
                 const response = fetch('/vote', {
                   method: 'GET',
                   headers: {
@@ -95,16 +96,16 @@
 
     });
   </script>  
-  <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
+  <!-- <script src="https://unpkg.com/vconsole@latest/dist/vconsole.min.js"></script>
   <script>
     // VConsole will be exported to `window.VConsole` by default.
     var vConsole = new window.VConsole();
-  </script>
+  </script> -->
 </head>
 
 <body class="bg-gray-100 min-h-screen">
   <div id="loading" class="flex items-center justify-center min-h-screen">
-    <div class="text-2xl font-semibold text-indigo-600">読み込み中...</div>
+    <div style="color: #2e7b51;" class="text-center text-2xl font-semibold">本棚から探しています...</div>
   </div>
 </body>
 

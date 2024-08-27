@@ -1,12 +1,13 @@
 // 本を検索して結果を返す
 export const SearchBooks = async (title) => {
     // Google Books APIs のエンドポイント
+    const api_key = process.env.API_KEY;
     const endpoint = 'https://www.googleapis.com/books/v1/volumes?q=';
     console.log("ure = " + `${endpoint}search+${title}`)
   
     try{
     // 検索 API を叩く
-    const res = await fetch(`${endpoint}search+${title}`);
+    const res = await fetch(`${endpoint}search+${title}&key=${api_key}`);
     // JSON に変換
     const data = await res.json();
     console.log("data =" + data); // レスポンス全体を確認する

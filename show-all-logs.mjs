@@ -40,7 +40,7 @@ class ShowAllLogsLiff {
                 const linkEnd = result.bookUrl !== "" ? `</a>` : '';
                 return `
                     ${linkStart}
-                    <div class="rounded-lg border-4 ${boderColor}  shadow-2xl">
+                    <div class="rounded-xl border-4 ${boderColor}  shadow-2xl">
                     <div
                     class="flex flex-row rounded-lg bg-white text-surface shadow-secondary-1 dark:bg-surface-dark dark:text-white md:max-w-xl md:flex-row">
                     <div class=" w-32 h-full p-4 ry-auto">
