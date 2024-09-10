@@ -5,7 +5,9 @@
   "main": "index.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.mjs"
+    "start": "node index.mjs",
+    "set-rich-menu": "node set-rich-menu.mjs",
+    "start2": "node index_2.mjs"
   },
   "author": "",
   "license": "ISC",
